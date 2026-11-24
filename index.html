@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>24 Kasım Öğretmenler Günü - İnteraktif Resim Atölyesi 🎨</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Türkçe Karakter Destekli Google Fontlar -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        script: ['Dancing Script', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* =========================================================
+           TEMEL AYARLAR VE MOBİL DOKUNMA OPTİMİZASYONU
+           ========================================================= */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background: #f5ece0;
+            touch-action: manipulation;
+        }
+
+        /* =========================================================
+           YEDEK (FALLBACK) ATÖLYE ARKA PLANI
+           (atolye.jpg yüklenirse otomatik gizlenir)
+           ========================================================= */
+        .fallback-wall {
+            background: linear-gradient(180deg, #faf5ef 0%, #f3e8db 64%, #e9dac8 100%);
+        }
+
+        .fallback-sunbeam {
+            position: absolute;
+            top: -10%;
+            right: 8%;
+            width: 55%;
+            height: 120%;
+            background: linear-gradient(140deg, rgba(255, 250, 235, 0.55) 0%, rgba(255, 238, 200, 0.14) 55%, transparent 100%);
+            transform: skewX(-16deg);
+            pointer-events: none;
+        }
+
+        .fallback-floor {
+            background-color: #ddd6ce;
+            background-image:
+                radial-gradient(rgba(120, 113, 108, 0.22) 1.5px, transparent 1.5px),
+                radial-gradient(rgba(180, 140, 100, 0.18) 1.5px, transparent 1.5px),
+                linear-gradient(180deg, rgba(168, 155, 140, 0.25) 0%, rgba(226, 220, 212, 0.1) 30%, rgba(190, 180, 168, 0.3) 100%);
+            background-size: 26px 26px, 38px 38px, 100% 100%;
+            background-position: 0 0, 13px 17px, 0 0;
+            box-shadow: inset 0 12px 24px rgba(80, 60, 40, 0.14);
+        }
+
+        /* Güneş Tozu Parçacıkları */
+        .dust-mote {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, rgba(255, 234, 180, 0.25) 70%, transparent 100%);
+            pointer-events: none;
+            animation: dustFloat linear infinite;
+        }
+
+        @keyframes dustFloat {
+            0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+            25% { opacity: 0.85; }
+            75% { opacity: 0.7; }
+            100% { transform: translate(28px, -60px) scale(1.15); opacity: 0; }
+        }
+
+        /* =========================================================
+           KARAKTER HAREKET, DÖNÜŞ VE BOYAMA ANİMASYONLARI
+           ========================================================= */
+        #characterWrapper {
+            position: absolute;
+            bottom: 13%;
+            left: 0;
+            will-change: transform;
+            pointer-events: none;
+            z-index: 26;
+        }
+
+        .char-flip {
+            transition: transform 0.14s ease-out;
+            transform-origin: center bottom;
+        }
+
+        /* Nefes Alma (Idle) */
+        .char-body-anim {
+            transform-origin: center bottom;
+            animation: idleBreath 2.8s ease-in-out infinite;
+        }
+
+        /* Yürüme (Bounce + Hafif Eğim) */
+        .is-walking .char-body-anim {
+            animation: walkBounce 0.34s ease-in-out infinite;
+        }
+
+        /* Boyama (Enerjik Sallanma) */
+        .is-painting .char-body-anim {
+            animation: paintSway 0.32s ease-in-out infinite;
+        }
+
+        /* %100 Kutlama Zıplaması */
+        .is-celebrating .char-body-anim {
+            animation: happyJump 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+        }
+
+        @keyframes idleBreath {
+            0%, 100% { transform: translateY(0) scaleY(1); }
+            50% { transform: translateY(-2.5px) scaleY(1.014); }
+        }
+
+        @keyframes walkBounce {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        @keyframes paintSway {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-4px) rotate(3.5deg) scale(1.02); }
+        }
+
+        @keyframes happyJump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            45% { transform: translateY(-26px) scale(1.05); }
+        }
+
+        /* Yedek SVG Karakter Uzuv Animasyonları */
+        .leg-left, .leg-right {
+            transform-origin: 100px 186px;
+        }
+        .is-walking .leg-left { animation: legSwingL 0.34s ease-in-out infinite; }
+        .is-walking .leg-right { animation: legSwingR 0.34s ease-in-out infinite; }
+
+        @keyframes legSwingL {
+            0%, 100% { transform: rotate(-16deg); }
+            50% { transform: rotate(16deg); }
+        }
+        @keyframes legSwingR {
+            0%, 100% { transform: rotate(16deg); }
+            50% { transform: rotate(-16deg); }
+        }
+
+        .paint-arm {
+            transform-origin: 132px 136px;
+            transition: transform 0.14s ease;
+        }
+        .is-painting .paint-arm {
+            animation: armBrushSwish 0.3s ease-in-out infinite;
+        }
+
+        @keyframes armBrushSwish {
+            0%, 100% { transform: rotate(-10deg) translateY(0); }
+            50% { transform: rotate(-42deg) translateY(-8px); }
+        }
+
+        /* Yüklenen 3D Karakter İçin Hareketli Fırça Efekti */
+        .custom-brush-fx {
+            opacity: 0;
+            transform-origin: 20% 80%;
+            transition: opacity 0.15s ease;
+        }
+        .is-painting .custom-brush-fx {
+            opacity: 1;
+            animation: customBrushSwish 0.28s ease-in-out infinite;
+        }
+        @keyframes customBrushSwish {
+            0%, 100% { transform: rotate(-8deg) translate(0, 0); }
+            50% { transform: rotate(-38deg) translate(6px, -10px); }
+        }
+
+        /* Konuşma Balonu */
+        #speechBubble {
+            transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Zemin Tıklama Halka Efekti */
+        .floor-ripple {
+            position: absolute;
+            width: 38px;
+            height: 16px;
+            border: 2.5px solid rgba(255, 255, 255, 0.92);
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transform: translate(-50%, -50%) scale(0.3);
+            pointer-events: none;
+            z-index: 18;
+            animation: rippleExpand 0.55s ease-out forwards;
+        }
+
+        @keyframes rippleExpand {
+            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.75); opacity: 0; }
+        }
+
+        /* Aktif Boyama Butonu Parlaması */
+        .paint-btn-ready {
+            background: linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%);
+            box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.65), 0 8px 22px rgba(244, 63, 94, 0.38);
+            animation: pulseAction 1.55s infinite;
+        }
+
+        @keyframes pulseAction {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6), 0 8px 22px rgba(244, 63, 94, 0.38); }
+            70% { box-shadow: 0 0 0 12px rgba(244, 63, 94, 0), 0 8px 22px rgba(244, 63, 94, 0.38); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0), 0 8px 22px rgba(244, 63, 94, 0.38); }
+        }
+
+        /* Boya Sıçraması & Konfeti */
+        .fx-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 95;
+        }
+
+        /* Canvas Dokunma Ayarı */
+        #paintCanvas {
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        /* Modal Renk Paleti Noktaları */
+        .modal-swatch {
+            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.22s ease;
+        }
+        .modal-swatch.active {
+            transform: scale(1.25) translateY(-2px);
+            box-shadow: 0 0 0 3px #ffffff, 0 0 0 5.5px #1e1b4b;
+        }
+    </style>
+    <style>
+        /* Duvar galerisi: mevcut sahne ve karakter düzenini değiştirmeden eklenir. */
+        .wall-gallery {
+            position: absolute;
+            z-index: 2;
+            top: 9%;
+            left: 24%;
+            width: 48%;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: clamp(8px, 1.4vw, 20px);
+            pointer-events: none;
+        }
+        .wall-frame {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            padding: clamp(4px, .55vw, 8px);
+            background: linear-gradient(135deg, #f8e6bd, #a86d32 45%, #70431f 100%);
+            border: 1px solid rgba(74, 42, 18, .65);
+            box-shadow: 0 4px 10px rgba(40, 27, 17, .28), inset 0 0 0 2px rgba(255, 244, 218, .55);
+        }
+        .wall-frame img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border: 2px solid #fff8e9;
+            background: #eee;
+        }
+        .wall-draw-canvas {
+            position: absolute;
+            inset: clamp(6px, .75vw, 10px);
+            width: calc(100% - 2 * clamp(6px, .75vw, 10px));
+            height: calc(100% - 2 * clamp(6px, .75vw, 10px));
+            touch-action: none;
+            pointer-events: none;
+            cursor: crosshair;
+        }
+        .wall-draw-canvas.drawing-enabled { pointer-events: auto; }
+        #paintCanvas.free-draw { cursor: crosshair; }
+        .palette-swatch.active { outline: 3px solid white; box-shadow: 0 0 0 5px #292524; transform: scale(1.12); }
+        @media (max-width: 640px) {
+            .wall-gallery { top: 10%; left: 22%; width: 56%; gap: 6px; }
+            .wall-frame { padding: 3px; }
+            #easelZone > div:nth-child(2) { width: min(178px, 42vw); }
+            #easelZone > div:first-child { width: min(180px, 44vw); }
+        }
+        @media (max-height: 520px) {
+            #easelZone { transform: scale(.78); transform-origin: bottom right; }
+        }
+    </style>
+</head>
+<body class="relative flex flex-col justify-between overflow-hidden">
+
+    <!-- Durum Bildirimi (Toast - alert() yerine) -->
+    <div id="toastBanner" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300 bg-stone-900/85 backdrop-blur-md text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
+    </div>
+
+    <!-- =========================================================
+         ANA 2D ATÖLYE SAHNESİ
+         ========================================================= -->
+    <main id="studioStage" class="relative w-full h-full flex-1 overflow-hidden">
+
+        <!-- 1. ÖZEL ATÖLYE ARKA PLAN GÖRSELİ (./atolye.jpg veya yüklenen görsel) -->
+        <div id="customBgLayer" class="hidden absolute inset-0 z-0 pointer-events-none">
+            <img id="customBgImg" src="" alt="Resim Atölyesi" class="w-full h-full object-cover object-center">
+            <!-- Ön plandaki öğelerin rahat okunması için alt kısımda hafif derinlik gölgesi -->
+            <div class="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-black/30 via-black/10 to-transparent"></div>
+        </div>
+
+        <!-- 2. YEDEK (FALLBACK) STİLİZE ATÖLYE ARKA PLANI -->
+        <div id="fallbackBgLayer" class="absolute inset-0 z-0 pointer-events-none">
+            <div class="fallback-wall absolute inset-x-0 top-0 bottom-[28%]">
+                <div class="fallback-sunbeam"></div>
+
+                <div class="wall-gallery" aria-label="Duvara asılı resimler">
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.36 (1).jpeg" alt="Renkli geometrik resim"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.36 (2).jpeg" alt="Atölye duvarındaki resimler"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.36 (3).jpeg" alt="Mavi deniz resmi"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.36.jpeg" alt="Renkli manzara resmi"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.37 (1).jpeg" alt="Atölyede büyük tuval"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                    <div class="wall-frame"><img src="assets/WhatsApp Image 2026-11-24 at 16.29.37.jpeg" alt="Portre çalışmaları"><canvas class="wall-draw-canvas" aria-label="Bu resmin üzerine çiz"></canvas></div>
+                </div>
+
+                <!-- Sol Mantar Pano ve Mavi Göl Tablosu (Videodaki atölyeye gönderme) -->
+                <div class="hidden sm:block absolute top-[14%] left-[5%] w-40 h-28 bg-amber-800/75 border-4 border-stone-300 rounded shadow-sm"></div>
+                <div class="absolute bottom-[6%] left-[4%] sm:left-[7%] w-24 sm:w-32 h-20 sm:h-24 bg-gradient-to-b from-sky-200 via-amber-200 to-sky-500 rounded border-4 border-amber-700/80 shadow-md overflow-hidden">
+                    <div class="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-r from-sky-500 to-cyan-400"></div>
+                    <div class="absolute left-0 bottom-6 w-12 h-14 bg-amber-600/80 rounded-tr-full"></div>
+                </div>
+
+                <!-- Yüksek Atölye Pencereleri -->
+                <div class="absolute top-[10%] right-[12%] sm:right-[16%] w-28 sm:w-40 h-36 sm:h-48 bg-gradient-to-b from-sky-100 via-amber-50 to-white border-[6px] border-white rounded-sm shadow-md">
+                    <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1.5 bg-white"></div>
+                    <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-white"></div>
+                </div>
+            </div>
+
+            <!-- Süpürgelik -->
+            <div class="absolute inset-x-0 bottom-[28%] h-3 bg-stone-300 border-t border-white"></div>
+
+            <!-- Mozaik Atölye Zemini -->
+            <div class="fallback-floor absolute inset-x-0 bottom-0 h-[28%]"></div>
+        </div>
+
+        <!-- Ortam Güneş Tozu Parçacıkları -->
+        <div id="dustLayer" class="absolute inset-0 z-10 pointer-events-none overflow-hidden"></div>
+
+        <!-- =========================================================
+             SAĞ-ORTA ÖN PLAN: AHŞAP ŞÖVALE + BOYAMA TUVALİ + İLERLEME ÇUBUĞU
+             ========================================================= -->
+        <div id="easelZone" class="absolute bottom-[16%] right-[4%] sm:right-[9%] md:right-[11%] z-20 flex flex-col items-center">
+            <!-- Şövale Üstü İlerleme Çubuğu ve İpucu -->
+            <div class="mb-2 flex flex-col items-center gap-1.5 w-[180px] sm:w-[224px]">
+                <div id="easelHint" class="px-3 py-1 rounded-full bg-white/92 backdrop-blur-md border border-amber-200 text-stone-800 text-[11px] sm:text-xs font-semibold shadow-sm whitespace-nowrap animate-bounce">
+                    Yaklaş ve Boya ✨
+                </div>
+
+                <!-- Şık İlerleme Çubuğu (%0 - %100) -->
+                <div class="w-full bg-white/90 backdrop-blur-md border border-white rounded-full px-2.5 py-1 shadow-md flex items-center gap-2">
+                    <div class="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-500 rounded-full transition-all duration-300"></div>
+                    </div>
+                    <span id="progressText" class="text-[11px] font-bold text-rose-600 min-w-[30px] text-right">%0</span>
+                </div>
+            </div>
+
+            <!-- Ahşap Şövale Gövdesi -->
+            <div class="relative w-[min(178px,42vw)] sm:w-[224px] md:w-[248px] flex flex-col items-center">
+                <!-- Üst Ahşap Klips -->
+                <div class="w-10 h-4 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-md shadow -mb-1 z-10"></div>
+
+                <!-- Tuval Çerçevesi ve Gerçek HTML5 Canvas -->
+                <div class="relative w-full aspect-[3/4] bg-[#fffdf8] rounded-xl border-[6px] border-amber-800/90 shadow-2xl overflow-hidden z-10">
+                    <canvas id="paintCanvas" class="w-full h-full block"></canvas>
+                </div>
+
+                <!-- Alt Ahşap Boya Rafı -->
+                <div class="relative w-[112%] h-4 bg-gradient-to-b from-amber-700 to-amber-950 rounded-md shadow-lg -mt-1 z-20 flex items-center justify-between px-3">
+                    <div class="flex gap-1 -mt-3">
+                        <span class="w-3.5 h-2 rounded-sm bg-rose-500 shadow"></span>
+                        <span class="w-3.5 h-2 rounded-sm bg-amber-400 shadow"></span>
+                        <span class="w-3.5 h-2 rounded-sm bg-sky-400 shadow"></span>
+                    </div>
+                    <span class="w-4 h-2 rounded-sm bg-emerald-500 -mt-3 shadow"></span>
+                </div>
+
+                <!-- Ahşap Şövale Ayakları -->
+                <div class="relative w-full h-14 sm:h-16 pointer-events-none -mt-1">
+                    <div class="absolute left-[14%] top-0 w-3 h-full bg-amber-900 rounded-b-full origin-top rotate-[12deg] shadow"></div>
+                    <div class="absolute right-[14%] top-0 w-3 h-full bg-amber-900 rounded-b-full origin-top -rotate-[12deg] shadow"></div>
+                    <div class="absolute left-1/2 -translate-x-1/2 top-0 w-2.5 h-[88%] bg-amber-950/85 rounded-b-full"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             OYNANABİLİR RESİM ÖĞRETMENİ KARAKTERİ + KONUŞMA BALONU
+             ========================================================= -->
+        <div id="characterWrapper" class="w-[132px] sm:w-[164px] md:w-[184px]">
+            <!-- Karakterin Başının Üstündeki Konuşma Balonu (Yön değiştirdiğinde ters dönmez) -->
+            <div id="speechBubble" class="opacity-0 scale-90 pointer-events-none absolute -top-14 sm:-top-16 left-1/2 -translate-x-1/2 z-30 bg-white/95 backdrop-blur-md border border-amber-200 text-stone-800 text-[11px] sm:text-xs font-medium px-3 py-1.5 rounded-2xl shadow-lg whitespace-nowrap">
+                <span id="speechText">Hadi boyayalım! 🎨</span>
+                <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-amber-200 rotate-45"></div>
+            </div>
+
+            <!-- Yön Çevirme Katmanı -->
+            <div id="charFlip" class="char-flip relative w-full flex flex-col items-center">
+                <!-- Ayak Altı Yumuşak Zemin Temas Gölgesi -->
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[58%] h-4 rounded-full bg-stone-950/30 blur-[4px]"></div>
+
+                <!-- A) ÖZEL 3D PIXAR KARAKTER (./karakter.jpg veya yüklenen görsel - beyaz arka planı otomatik silinmiş) -->
+                <div id="customCharacterBox" class="hidden char-body-anim relative w-full flex items-end justify-center">
+                    <img id="customCharacterImg" src="" alt="Resim Öğretmeni Karakteri" class="w-full h-44 sm:h-56 md:h-64 object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.22)]">
+                    <!-- Boyama Sırasında Beliren Dinamik Fırça Efekti -->
+                    <div class="custom-brush-fx absolute -right-3 top-[42%] w-12 h-12 pointer-events-none">
+                        <svg viewBox="0 0 60 60" class="w-full h-full drop-shadow-md">
+                            <line x1="10" y1="50" x2="42" y2="18" stroke="#78350f" stroke-width="6" stroke-linecap="round"/>
+                            <line x1="36" y1="24" x2="42" y2="18" stroke="#cbd5e1" stroke-width="6.5" stroke-linecap="round"/>
+                            <path id="customBrushTip" d="M 40 19 C 44 8, 55 8, 52 19 C 50 24, 43 24, 40 19 Z" fill="#f43f5e"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- B) YEDEK (FALLBACK) RESİM ÖĞRETMENİ KARAKTERİ -->
+                <div id="fallbackCharacter" class="char-body-anim w-full">
+                    <svg viewBox="0 0 200 250" class="w-full h-auto drop-shadow-lg overflow-visible" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Sol & Sağ Bacaklar -->
+                        <g class="leg-left">
+                            <rect x="80" y="184" width="15" height="40" rx="7" fill="#27272a"/>
+                            <ellipse cx="89" cy="226" rx="14" ry="7" fill="#3f3f46"/>
+                        </g>
+                        <g class="leg-right">
+                            <rect x="105" y="184" width="15" height="40" rx="7" fill="#18181b"/>
+                            <ellipse cx="114" cy="226" rx="14" ry="7" fill="#27272a"/>
+                        </g>
+
+                        <!-- Lacivert Hırka & Tişört -->
+                        <path d="M 63 136 C 63 120, 137 120, 137 136 L 143 190 L 57 190 Z" fill="#1e293b"/>
+                        <path d="M 85 124 L 115 124 L 110 150 L 90 150 Z" fill="#475569"/>
+
+                        <!-- Boya Lekeli Kanvas Önlük -->
+                        <path d="M 73 135 L 127 135 L 135 192 L 65 192 Z" fill="#a89882"/>
+                        <rect x="78" y="122" width="8" height="18" rx="4" fill="#8c7b65"/>
+                        <rect x="114" y="122" width="8" height="18" rx="4" fill="#8c7b65"/>
+                        <!-- Önlük Cepleri ve Boya Lekeleri -->
+                        <rect x="85" y="148" width="30" height="18" rx="4" fill="#94836d"/>
+                        <circle cx="77" cy="173" r="4" fill="#f43f5e"/>
+                        <circle cx="122" cy="166" r="4.5" fill="#38bdf8"/>
+                        <circle cx="102" cy="179" r="3.5" fill="#fbbf24"/>
+                        <circle cx="116" cy="182" r="3" fill="#10b981"/>
+
+                        <!-- Sol El & Ahşap Palet -->
+                        <g transform="translate(22, 126) rotate(-10)">
+                            <path d="M 10 20 C 2 6, 22 -4, 40 4 C 54 10, 52 32, 36 36 C 28 38, 24 31, 18 33 C 12 35, 12 27, 10 20 Z" fill="#c2854c" stroke="#925b29" stroke-width="2"/>
+                            <circle cx="21" cy="12" r="4" fill="#f43f5e"/>
+                            <circle cx="32" cy="10" r="4" fill="#fbbf24"/>
+                            <circle cx="40" cy="18" r="4" fill="#38bdf8"/>
+                            <circle cx="35" cy="28" r="4" fill="#10b981"/>
+                            <circle cx="20" cy="23" r="3.2" fill="#fffaf2"/>
+                        </g>
+
+                        <!-- Boyun & Yüz -->
+                        <rect x="92" y="108" width="16" height="20" rx="7" fill="#f3c19d"/>
+                        <circle cx="100" cy="82" r="34" fill="#f8cba8"/>
+                        <circle cx="66" cy="84" r="6.5" fill="#f3c19d"/>
+                        <circle cx="134" cy="84" r="6.5" fill="#f3c19d"/>
+
+                        <!-- Sakal & Bıyık -->
+                        <path d="M 68 86 C 68 112, 84 120, 100 120 C 116 120, 132 112, 132 86 C 127 98, 116 106, 100 106 C 84 106, 73 98, 68 86 Z" fill="#291d16"/>
+                        <path d="M 88 99 Q 100 94 112 99 Q 100 103 88 99 Z" fill="#291d16"/>
+
+                        <!-- Gözler & Gülümseme -->
+                        <circle cx="87" cy="80" r="5" fill="#261a14"/>
+                        <circle cx="89" cy="78" r="1.8" fill="#ffffff"/>
+                        <circle cx="113" cy="80" r="5" fill="#261a14"/>
+                        <circle cx="115" cy="78" r="1.8" fill="#ffffff"/>
+                        <path d="M 80 71 Q 87 68 94 71" fill="none" stroke="#291d16" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 106 71 Q 113 68 120 71" fill="none" stroke="#291d16" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 93 102 Q 100 107 107 102" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+
+                        <!-- Dalgalı Koyu Saçlar -->
+                        <path d="M 64 78 C 58 46, 86 32, 114 38 C 136 42, 142 64, 135 80 C 128 62, 112 56, 94 58 C 78 60, 70 68, 64 78 Z" fill="#261a14"/>
+
+                        <!-- Sağ Kol & Hareketli Boya Fırçası -->
+                        <g class="paint-arm">
+                            <path d="M 128 136 Q 144 146 151 133" fill="none" stroke="#1e293b" stroke-width="14" stroke-linecap="round"/>
+                            <line x1="147" y1="139" x2="185" y2="95" stroke="#78350f" stroke-width="6.5" stroke-linecap="round"/>
+                            <line x1="179" y1="102" x2="185" y2="95" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+                            <path id="svgBrushTip" d="M 183 96 C 186 83, 198 81, 196 93 C 194 99, 187 100, 183 96 Z" fill="#f43f5e"/>
+                            <circle cx="151" cy="133" r="8" fill="#f8cba8"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========================================================
+         ALT KONTROL ÇUBUĞU (MOBİL + MASAÜSTÜ ERGONOMİK DOKUNMATİK)
+         ========================================================= -->
+    <footer class="fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 sm:pb-4 pointer-events-none flex flex-col items-center gap-2">
+        <div id="drawingPalette" class="hidden pointer-events-auto items-center justify-center gap-3 bg-white/95 backdrop-blur-xl border border-white rounded-full px-4 py-2 shadow-2xl" aria-label="Çizim renk paleti">
+            <span class="text-xs font-semibold text-stone-700">Renk</span>
+            <button class="palette-swatch active w-7 h-7 rounded-full bg-rose-500 transition" data-color="#f43f5e" onclick="selectDrawingColor(this)" aria-label="Gül kırmızısı"></button>
+            <button class="palette-swatch w-7 h-7 rounded-full bg-amber-400 transition" data-color="#f59e0b" onclick="selectDrawingColor(this)" aria-label="Altın sarısı"></button>
+            <button class="palette-swatch w-7 h-7 rounded-full bg-sky-500 transition" data-color="#0ea5e9" onclick="selectDrawingColor(this)" aria-label="Göl mavisi"></button>
+            <button class="palette-swatch w-7 h-7 rounded-full bg-violet-500 transition" data-color="#8b5cf6" onclick="selectDrawingColor(this)" aria-label="Lavanta moru"></button>
+            <button class="palette-swatch w-7 h-7 rounded-full bg-emerald-500 transition" data-color="#10b981" onclick="selectDrawingColor(this)" aria-label="Zümrüt yeşili"></button>
+            <button class="palette-swatch w-7 h-7 rounded-full bg-stone-800 transition" data-color="#292524" onclick="selectDrawingColor(this)" aria-label="Siyah"></button>
+        </div>
+        <div class="pointer-events-auto flex items-center justify-between gap-2.5 sm:gap-3 bg-white/88 backdrop-blur-xl border border-white rounded-full p-2 shadow-2xl w-full max-w-md">
+            <!-- Sol / Sağ Yürüme Tuşları -->
+            <div class="flex items-center gap-2">
+                <button id="btnLeft" class="w-12 h-11 sm:w-14 sm:h-12 rounded-full bg-stone-100 hover:bg-stone-200 active:bg-amber-200 text-stone-800 font-bold text-lg flex items-center justify-center shadow-inner cursor-pointer transition" aria-label="Sola yürü">
+                    ◀
+                </button>
+                <button id="btnRight" class="w-12 h-11 sm:w-14 sm:h-12 rounded-full bg-stone-100 hover:bg-stone-200 active:bg-amber-200 text-stone-800 font-bold text-lg flex items-center justify-center shadow-inner cursor-pointer transition" aria-label="Sağa yürü">
+                    ▶
+                </button>
+            </div>
+
+            <!-- Fırça Vur / Şövaleye Yürü Aksiyon Butonu (Tıkla veya Basılı Tut) -->
+            <button id="btnPaint" class="flex-1 h-11 sm:h-12 px-4 rounded-full bg-stone-300 text-stone-600 font-semibold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer transition active:scale-95">
+                <span>🎨</span>
+                <span id="btnPaintLabel">Şövaleye Yürü</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- =========================================================
+         BÜYÜK FİNAL: 24 KASIM KUTLAMA KARTI MODALI
+         ========================================================= -->
+    <div id="greetingModal" onclick="closeModalBackdrop(event)" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-stone-950/60 backdrop-blur-md opacity-0 transition-opacity duration-300">
+        <div id="greetingCardBox" class="relative w-full max-w-md bg-white/90 backdrop-blur-2xl border-2 border-rose-300/80 rounded-[2rem] p-6 sm:p-8 text-center transform scale-90 translate-y-6 transition-all duration-300 overflow-hidden" style="box-shadow: 0 25px 60px rgba(244, 63, 94, 0.35), inset 0 0 30px rgba(255, 255, 255, 0.7);">
+
+            <!-- Üst Dekoratif Işık Halesi -->
+            <div id="modalGlow" class="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-40 rounded-full blur-3xl opacity-35 pointer-events-none transition-colors duration-500" style="background: #f43f5e;"></div>
+
+            <div class="relative z-10">
+                <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-rose-100 to-amber-100 flex items-center justify-center text-3xl shadow-inner">
+                    💐
+                </div>
+
+                <h2 class="font-script text-3xl sm:text-4xl text-stone-900 mb-3 leading-snug">
+                    24 Kasım Öğretmenler Günü Kutlu Olsun! 🎨✨
+                </h2>
+
+                <!-- Özelleştirilebilir Kutlama Mesajı -->
+                <p class="font-serif italic text-stone-700 text-sm sm:text-base leading-relaxed mb-5 px-1">
+                    "Hayata renk katan, her dokunuşuyla güzellik yaratan canım arkadaşım... Öğretmenler Günün kutlu olsun! Yeni tuvallerde, hep güzel renklerle dolu bir ömür dilerim. ❤️"
+                </p>
+
+                <!-- İnteraktif Renk Paleti Noktaları (Modal Işığını Değiştirir + Parıltı Patlatır) -->
+                <div class="flex items-center justify-center gap-3 mb-6 py-2 px-4 bg-stone-100/80 rounded-full w-fit mx-auto">
+                    <button onclick="setModalAccent('#f43f5e', this)" class="modal-swatch active w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow" style="background:#f43f5e" aria-label="Gül Kırmızısı"></button>
+                    <button onclick="setModalAccent('#f59e0b', this)" class="modal-swatch w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow" style="background:#f59e0b" aria-label="Altın Sarısı"></button>
+                    <button onclick="setModalAccent('#0ea5e9', this)" class="modal-swatch w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow" style="background:#0ea5e9" aria-label="Göl Mavisi"></button>
+                    <button onclick="setModalAccent('#8b5cf6', this)" class="modal-swatch w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow" style="background:#8b5cf6" aria-label="Lavanta Moru"></button>
+                    <button onclick="setModalAccent('#10b981', this)" class="modal-swatch w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow" style="background:#10b981" aria-label="Zümrüt Yeşili"></button>
+                </div>
+
+                <!-- Aksiyon Butonları -->
+                <div class="flex items-center gap-2.5">
+                    <button onclick="resetPaintingAndClose()" class="flex-1 py-3 px-4 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 font-semibold text-sm transition active:scale-95 cursor-pointer">
+                        Tekrar Boya 🔄
+                    </button>
+                    <button onclick="closeGreetingModal()" class="flex-1 py-3 px-4 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-semibold text-sm shadow-lg hover:brightness-105 transition active:scale-95 cursor-pointer">
+                        Atölyeye Dön ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================
+           1. ÖZELLEŞTİRME AYARLARI (DOSYA İSİMLERİ & KONUŞMA BALONLARI)
+           ========================================================= */
+        const CONFIG = {
+            bgCandidates: ['./atolye.jpg', './atolye.png'],
+            charCandidates: ['./karakter.png', './karakter.jpg'],
+            palette: ['#f43f5e', '#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981'],
+            speechZones: {
+                left: 'Mavi göl tablosu harika olmuş 🎨',
+                middle: 'Fırçalarımı nereye koydum ya? 🤔',
+                easel: 'Hadi bu tuvali tamamlayalım! ✨',
+                done: 'Şaheser hazır! Harikasın! 🎉'
+            }
+        };
+
+        /* =========================================================
+           2. OYUN DURUMU (STATE) VE DOM REFERANSLARI
+           ========================================================= */
+        const state = {
+            charX: 60,
+            targetX: null,
+            facing: 1,              // 1: sağa bakar, -1: sola bakar
+            speed: 280,             // piksel / saniye
+            keys: { left: false, right: false },
+            isWalking: false,
+            isNearEasel: false,
+            isPainting: false,
+            paintAnimTimeout: null,
+            holdPaintInterval: null,
+            autoPaintAfterWalk: false,
+            progress: 0,
+            completed: false,
+            activeZone: null,
+            speechTimeout: null,
+            lastSpeechAt: 0,
+            drawingColor: '#f43f5e',
+            toolbarVisible: true,
+            lastTime: performance.now()
+        };
+
+        const stageEl = document.getElementById('studioStage');
+        const charWrapper = document.getElementById('characterWrapper');
+        const charFlip = document.getElementById('charFlip');
+        const easelZone = document.getElementById('easelZone');
+        const easelHint = document.getElementById('easelHint');
+        const btnPaint = document.getElementById('btnPaint');
+        const btnPaintLabel = document.getElementById('btnPaintLabel');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const speechBubble = document.getElementById('speechBubble');
+        const speechText = document.getElementById('speechText');
+        const paintCanvas = document.getElementById('paintCanvas');
+        const ctx = paintCanvas.getContext('2d');
+
+        // Gizli Suluboya Tablo İçin Offscreen Canvas ve İlerleme Izgarası
+        const hiddenCanvas = document.createElement('canvas');
+        const hiddenCtx = hiddenCanvas.getContext('2d');
+        const GRID_COLS = 16;
+        const GRID_ROWS = 20;
+        let revealedGrid = new Array(GRID_COLS * GRID_ROWS).fill(false);
+        let isDraggingCanvas = false;
+        let lastCanvasPoint = null;
+
+        /* =========================================================
+           3. BAŞLATMA VE OTOMATİK GÖRSEL YÜKLEME
+           ========================================================= */
+        function initStudio() {
+            setupDustParticles();
+            setupCanvases();
+
+            // Karakteri sol ön alana yerleştir
+            state.charX = Math.max(16, stageEl.clientWidth * 0.14);
+            updateCharacterTransform();
+
+            setupInputs();
+            setupWallDrawing();
+            autoLoadLocalAssets();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Aynı klasördeki karakter görselini otomatik dener
+        function autoLoadLocalAssets() {
+            tryLoadSequential(CONFIG.charCandidates, (img) => {
+                applyCharacterImage(img, false);
+            });
+        }
+
+        function tryLoadSequential(paths, onSuccess, index = 0) {
+            if (index >= paths.length) return;
+            const img = new Image();
+            img.onload = () => onSuccess(img);
+            img.onerror = () => tryLoadSequential(paths, onSuccess, index + 1);
+            img.src = paths[index];
+        }
+
+        function applyBackgroundImage(src) {
+            document.getElementById('customBgImg').src = src;
+            document.getElementById('customBgLayer').classList.remove('hidden');
+            document.getElementById('fallbackBgLayer').classList.add('hidden');
+        }
+
+        function applyCharacterImage(img, showNotification = true) {
+            // Düz beyaz arka planı kenar yumuşatmalı flood-fill ile otomatik temizle
+            const processedDataUrl = removeWhiteBackground(img);
+            document.getElementById('customCharacterImg').src = processedDataUrl;
+            document.getElementById('customCharacterBox').classList.remove('hidden');
+            document.getElementById('fallbackCharacter').classList.add('hidden');
+
+            if (showNotification) {
+                showToast('Karakter eklendi ve arka planı temizlendi! ✨');
+            }
+        }
+
+        /* =========================================================
+           4. AKILLI KENAR DUYARLI BEYAZ ARKA PLAN SİLİCİ (BFS FLOOD-FILL)
+           Sadece dış kenarlardan başlayarak beyaz arka planı siler;
+           karakterin gözlerindeki veya kıyafetindeki beyaz detayları korur!
+           ========================================================= */
+        function removeWhiteBackground(img) {
+            try {
+                const maxDim = 900;
+                const scale = Math.min(1, maxDim / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+                const w = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+                const h = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+
+                const off = document.createElement('canvas');
+                off.width = w;
+                off.height = h;
+                const octx = off.getContext('2d', { willReadFrequently: true });
+                octx.drawImage(img, 0, 0, w, h);
+
+                const imgData = octx.getImageData(0, 0, w, h);
+                const data = imgData.data;
+                const total = w * h;
+                const visited = new Uint8Array(total);
+                const removed = new Uint8Array(total);
+
+                // Bir pikselin dış beyaz arka plana ait olup olmadığını kontrol eder
+                const isNearWhite = (idx) => {
+                    const p = idx * 4;
+                    const r = data[p], g = data[p + 1], b = data[p + 2], a = data[p + 3];
+                    if (a < 20) return true;
+                    const maxC = Math.max(r, g, b);
+                    const minC = Math.min(r, g, b);
+                    return r > 224 && g > 224 && b > 224 && (maxC - minC) < 32;
+                };
+
+                // 4 dış kenardan BFS (Breadth-First Search) kuyruğunu başlat
+                const queue = new Int32Array(total);
+                let head = 0, tail = 0;
+
+                const enqueueIfWhite = (x, y) => {
+                    const idx = y * w + x;
+                    if (!visited[idx] && isNearWhite(idx)) {
+                        visited[idx] = 1;
+                        queue[tail++] = idx;
+                    }
+                };
+
+                for (let x = 0; x < w; x++) {
+                    enqueueIfWhite(x, 0);
+                    enqueueIfWhite(x, h - 1);
+                }
+                for (let y = 0; y < h; y++) {
+                    enqueueIfWhite(0, y);
+                    enqueueIfWhite(w - 1, y);
+                }
+
+                // Dış beyaz alanı içeri doğru tara ve şeffaflaştır
+                while (head < tail) {
+                    const idx = queue[head++];
+                    removed[idx] = 1;
+                    data[idx * 4 + 3] = 0;
+
+                    const x = idx % w;
+                    const y = (idx - x) / w;
+
+                    if (x > 0) enqueueIfWhite(x - 1, y);
+                    if (x < w - 1) enqueueIfWhite(x + 1, y);
+                    if (y > 0) enqueueIfWhite(x, y - 1);
+                    if (y < h - 1) enqueueIfWhite(x, y + 1);
+                }
+
+                // Kenar Yumuşatma (Anti-Aliasing / Halo Giderme Pass'i)
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = y * w + x;
+                        if (removed[idx]) continue;
+
+                        // Silinen arka plana komşu mu?
+                        const touchesBg =
+                            removed[idx - 1] || removed[idx + 1] ||
+                            removed[idx - w] || removed[idx + w];
+
+                        if (touchesBg) {
+                            const p = idx * 4;
+                            const r = data[p], g = data[p + 1], b = data[p + 2];
+                            const lum = (r + g + b) / 3;
+                            const sat = Math.max(r, g, b) - Math.min(r, g, b);
+
+                            if (lum > 195 && sat < 45) {
+                                const factor = Math.max(0, Math.min(1, (245 - lum) / 55));
+                                data[p + 3] = Math.round(data[p + 3] * factor);
+                            }
+                        }
+                    }
+                }
+
+                octx.putImageData(imgData, 0, 0);
+                return off.toDataURL('image/png');
+            } catch (err) {
+                // Yerel file:// protokolü güvenlik kısıtlamasına takılırsa orijinal görseli güvenle kullan
+                console.warn('Beyaz arka plan temizleme atlandı (CORS/yerel dosya kısıtlaması):', err);
+                return img.src;
+            }
+        }
+
+        // Kullanıcı Dosya Seçicileri (Atölye & Karakter)
+        function handleBgUpload(event) {
+            try {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    applyBackgroundImage(e.target.result);
+                    showToast('Atölye arka planı güncellendi! 🖼️');
+                };
+                reader.readAsDataURL(file);
+            } catch (err) {
+                console.error('Arka plan yüklenemedi:', err);
+            }
+        }
+
+        function handleCharUpload(event) {
+            try {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => applyCharacterImage(img, true);
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } catch (err) {
+                console.error('Karakter yüklenemedi:', err);
+            }
+        }
+
+        function toggleAssetToolbar() {
+            state.toolbarVisible = !state.toolbarVisible;
+            const toolbar = document.getElementById('assetToolbar');
+            if (state.toolbarVisible) {
+                toolbar.classList.remove('opacity-0', 'scale-75', 'pointer-events-none', 'w-0', 'overflow-hidden', 'p-0', 'border-0');
+            } else {
+                toolbar.classList.add('opacity-0', 'scale-75', 'pointer-events-none', 'w-0', 'overflow-hidden', 'p-0', 'border-0');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastBanner');
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0', '-translate-y-2');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+            }, 2600);
+        }
+
+        /* =========================================================
+           5. TUVAL VE GİZLİ SULUBOYA ŞAHESERİ (GÜN BATIMI GÖLÜ + 24 KASIM)
+           ========================================================= */
+        function setupDustParticles() {
+            const dustLayer = document.getElementById('dustLayer');
+            const count = window.innerWidth < 640 ? 14 : 22;
+            for (let i = 0; i < count; i++) {
+                const mote = document.createElement('div');
+                mote.className = 'dust-mote';
+                const size = Math.random() * 5 + 3;
+                mote.style.width = size + 'px';
+                mote.style.height = size + 'px';
+                mote.style.left = Math.random() * 100 + '%';
+                mote.style.top = Math.random() * 82 + '%';
+                mote.style.animationDuration = (Math.random() * 8 + 7) + 's';
+                mote.style.animationDelay = (Math.random() * -10) + 's';
+                dustLayer.appendChild(mote);
+            }
+        }
+
+        function setupCanvases() {
+            const w = 300;
+            const h = 400;
+            paintCanvas.width = w;
+            paintCanvas.height = h;
+            hiddenCanvas.width = w;
+            hiddenCanvas.height = h;
+
+            drawBlankLinenCanvas();
+            loadMainPhotoArtwork(w, h);
+        }
+
+        function loadMainPhotoArtwork(w, h) {
+            const photo = new Image();
+            photo.onload = () => {
+                hiddenCtx.clearRect(0, 0, w, h);
+                hiddenCtx.drawImage(photo, 0, 0, w, h);
+                drawMainArtworkGreeting(w, h);
+            };
+            photo.onerror = () => {
+                drawHiddenWatercolorArtwork(w, h);
+                drawMainArtworkGreeting(w, h);
+            };
+            photo.src = 'son.jpeg';
+        }
+
+        function drawMainArtworkGreeting(w, h) {
+            const bandHeight = h * 0.19;
+            const band = hiddenCtx.createLinearGradient(0, 0, 0, bandHeight);
+            band.addColorStop(0, 'rgba(20, 28, 40, 0.78)');
+            band.addColorStop(1, 'rgba(20, 28, 40, 0.48)');
+            hiddenCtx.fillStyle = band;
+            hiddenCtx.fillRect(0, 0, w, bandHeight);
+            hiddenCtx.save();
+            hiddenCtx.textAlign = 'center';
+            hiddenCtx.textBaseline = 'middle';
+            hiddenCtx.fillStyle = '#fffaf0';
+            hiddenCtx.shadowColor = 'rgba(0, 0, 0, .65)';
+            hiddenCtx.shadowBlur = 4;
+            hiddenCtx.font = '700 20px "Playfair Display", Georgia, serif';
+            hiddenCtx.fillText('Öğretmenler Gününüz', w / 2, bandHeight * 0.38, w - 14);
+            hiddenCtx.font = '700 22px "Dancing Script", Georgia, cursive';
+            hiddenCtx.fillText('Kutlu Olsun!', w / 2, bandHeight * 0.73, w - 14);
+            hiddenCtx.restore();
+        }
+
+        function setupWallDrawing() {
+            document.querySelectorAll('.wall-draw-canvas').forEach((canvas) => {
+                const sizeCanvas = () => {
+                    const rect = canvas.getBoundingClientRect();
+                    if (rect.width && rect.height) {
+                        canvas.width = Math.round(rect.width * (window.devicePixelRatio || 1));
+                        canvas.height = Math.round(rect.height * (window.devicePixelRatio || 1));
+                    }
+                };
+                const image = canvas.parentElement.querySelector('img');
+                image.addEventListener('load', sizeCanvas, { once: true });
+                if (image.complete) sizeCanvas();
+                const wallCtx = canvas.getContext('2d');
+                canvas.addEventListener('pointerdown', (e) => {
+                    if (!state.completed) return;
+                    e.stopPropagation();
+                    canvas.setPointerCapture(e.pointerId);
+                    drawFreehandPoint(canvas, wallCtx, e, true);
+                });
+                canvas.addEventListener('pointermove', (e) => {
+                    if (state.completed && canvas.hasPointerCapture(e.pointerId)) drawFreehandPoint(canvas, wallCtx, e, false);
+                });
+                ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((name) => {
+                    canvas.addEventListener(name, () => {
+                        delete canvas.dataset.lastX;
+                        delete canvas.dataset.lastY;
+                    });
+                });
+            });
+        }
+
+        function drawFreehandPoint(canvas, context, event, start) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (event.clientX - rect.left) * scaleX;
+            const y = (event.clientY - rect.top) * scaleY;
+            context.save();
+            context.strokeStyle = state.drawingColor;
+            context.fillStyle = state.drawingColor;
+            context.lineWidth = Math.max(4, canvas.width / 38);
+            context.lineCap = 'round';
+            context.lineJoin = 'round';
+            if (start || canvas.dataset.lastX === undefined) {
+                context.beginPath();
+                context.arc(x, y, context.lineWidth / 2, 0, Math.PI * 2);
+                context.fill();
+            } else {
+                context.beginPath();
+                context.moveTo(Number(canvas.dataset.lastX), Number(canvas.dataset.lastY));
+                context.lineTo(x, y);
+                context.stroke();
+            }
+            context.restore();
+            canvas.dataset.lastX = String(x);
+            canvas.dataset.lastY = String(y);
+        }
+
+        function selectDrawingColor(button) {
+            state.drawingColor = button.dataset.color;
+            document.querySelectorAll('.palette-swatch').forEach((swatch) => swatch.classList.toggle('active', swatch === button));
+        }
+
+        function drawBlankLinenCanvas() {
+            const w = paintCanvas.width;
+            const h = paintCanvas.height;
+
+            ctx.fillStyle = '#fffdf8';
+            ctx.fillRect(0, 0, w, h);
+
+            // İnce keten tuval dokusu
+            ctx.strokeStyle = 'rgba(210, 195, 175, 0.24)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < w; x += 12) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 12) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // Hafif kurşun kalem eskiz rehberi
+            ctx.save();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+            ctx.setLineDash([6, 6]);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(30, h * 0.48);
+            ctx.quadraticCurveTo(w * 0.5, h * 0.42, w - 30, h * 0.48);
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(120, 113, 108, 0.45)';
+            ctx.font = '600 20px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎨 Boyamaya Başla', w / 2, h * 0.84);
+            ctx.restore();
+        }
+
+        // Boyandıkça Ortaya Çıkan Suluboya Tablo: Gün Batımı Gölü, Altın Sazlıklar, Çiçekler & Kaligrafi
+        function drawHiddenWatercolorArtwork(w, h) {
+            // 1. Gün Batımı Gökyüzü
+            const skyGrad = hiddenCtx.createLinearGradient(0, 0, 0, h * 0.55);
+            skyGrad.addColorStop(0, '#fda4af');
+            skyGrad.addColorStop(0.45, '#fdba74');
+            skyGrad.addColorStop(1, '#fef08a');
+            hiddenCtx.fillStyle = skyGrad;
+            hiddenCtx.fillRect(0, 0, w, h * 0.55);
+
+            // Parlayan Gün Batımı Güneşi
+            const sunGrad = hiddenCtx.createRadialGradient(w * 0.55, h * 0.36, 6, w * 0.55, h * 0.36, 75);
+            sunGrad.addColorStop(0, 'rgba(255, 255, 240, 0.95)');
+            sunGrad.addColorStop(0.4, 'rgba(253, 224, 71, 0.65)');
+            sunGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+            hiddenCtx.fillStyle = sunGrad;
+            hiddenCtx.beginPath();
+            hiddenCtx.arc(w * 0.55, h * 0.36, 75, 0, Math.PI * 2);
+            hiddenCtx.fill();
+
+            // Uzak Tepeler (Suluboya Tonları)
+            hiddenCtx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+            hiddenCtx.beginPath();
+            hiddenCtx.moveTo(0, h * 0.48);
+            hiddenCtx.quadraticCurveTo(w * 0.25, h * 0.35, w * 0.52, h * 0.46);
+            hiddenCtx.quadraticCurveTo(w * 0.78, h * 0.37, w, h * 0.47);
+            hiddenCtx.lineTo(w, h * 0.55);
+            hiddenCtx.lineTo(0, h * 0.55);
+            hiddenCtx.fill();
+
+            // 2. Parıldayan Mavi Göl & Gün Batımı Yansımaları
+            const lakeGrad = hiddenCtx.createLinearGradient(0, h * 0.48, 0, h);
+            lakeGrad.addColorStop(0, '#38bdf8');
+            lakeGrad.addColorStop(0.45, '#0284c7');
+            lakeGrad.addColorStop(1, '#1e3a8a');
+            hiddenCtx.fillStyle = lakeGrad;
+            hiddenCtx.fillRect(0, h * 0.48, w, h * 0.52);
+
+            // Göl Üzerinde Altın Işık Yansımaları
+            hiddenCtx.strokeStyle = 'rgba(254, 240, 138, 0.65)';
+            hiddenCtx.lineCap = 'round';
+            for (let i = 0; i < 9; i++) {
+                hiddenCtx.lineWidth = 4 - i * 0.3;
+                const y = h * 0.52 + i * 11;
+                const halfW = 46 - i * 3.5;
+                hiddenCtx.beginPath();
+                hiddenCtx.moveTo(w * 0.55 - halfW, y);
+                hiddenCtx.lineTo(w * 0.55 + halfW, y);
+                hiddenCtx.stroke();
+            }
+
+            // 3. Sol Kıyı Altın Sazlıklar (Gerçek atölyedeki tabloya selam!)
+            hiddenCtx.lineCap = 'round';
+            for (let i = 0; i < 16; i++) {
+                const bx = 10 + i * 7.5;
+                const height = 75 + (i % 4) * 22;
+                hiddenCtx.strokeStyle = i % 2 === 0 ? '#d97706' : '#f59e0b';
+                hiddenCtx.lineWidth = 2.6;
+                hiddenCtx.beginPath();
+                hiddenCtx.moveTo(bx, h * 0.76);
+                hiddenCtx.quadraticCurveTo(bx + 12, h * 0.76 - height * 0.55, bx + 22, h * 0.76 - height);
+                hiddenCtx.stroke();
+            }
+
+            // 4. Ön Plan Kır Çiçekleri
+            const flowers = [
+                { x: 42, y: 295, r: 12, p: '#f43f5e', c: '#fef08a' },
+                { x: 78, y: 310, r: 10, p: '#fbbf24', c: '#fff1f2' },
+                { x: 248, y: 302, r: 12, p: '#ec4899', c: '#fef08a' },
+                { x: 282, y: 288, r: 11, p: '#a855f7', c: '#fde047' },
+                { x: 266, y: 322, r: 9, p: '#38bdf8', c: '#fef08a' }
+            ];
+            flowers.forEach(f => drawWatercolorFlower(hiddenCtx, f.x, f.y, f.r, f.p, f.c));
+
+            // 5. Alt Kısım Yumuşak Vinyet + Kaligrafi Kutlama Yazısı
+            const textCardGrad = hiddenCtx.createLinearGradient(0, h * 0.68, 0, h);
+            textCardGrad.addColorStop(0, 'rgba(255, 253, 248, 0)');
+            textCardGrad.addColorStop(0.35, 'rgba(255, 253, 248, 0.88)');
+            textCardGrad.addColorStop(1, 'rgba(255, 253, 248, 0.96)');
+            hiddenCtx.fillStyle = textCardGrad;
+            hiddenCtx.fillRect(0, h * 0.68, w, h * 0.32);
+
+            hiddenCtx.fillStyle = '#881337';
+            hiddenCtx.font = '700 40px "Dancing Script", cursive';
+            hiddenCtx.textAlign = 'center';
+            hiddenCtx.fillText('24 Kasım', w / 2, h * 0.84);
+
+            hiddenCtx.fillStyle = '#1e1b4b';
+            hiddenCtx.font = '600 14px "Playfair Display", serif';
+            hiddenCtx.fillText('Öğretmenler Günü Kutlu Olsun!', w / 2, h * 0.93);
+        }
+
+        function drawWatercolorFlower(c, x, y, r, petalColor, centerColor) {
+            c.save();
+            c.translate(x, y);
+            c.fillStyle = petalColor;
+            for (let i = 0; i < 6; i++) {
+                c.rotate(Math.PI / 3);
+                c.beginPath();
+                c.ellipse(0, -r * 0.6, r * 0.42, r * 0.58, 0, 0, Math.PI * 2);
+                c.fill();
+            }
+            c.fillStyle = centerColor;
+            c.beginPath();
+            c.arc(0, 0, r * 0.36, 0, Math.PI * 2);
+            c.fill();
+            c.restore();
+        }
+
+        /* =========================================================
+           6. KONTROLLER (KLAVYE, ZEMİN TIKLAMA, BASILI TUTMA, TUVAL)
+           ========================================================= */
+        function setupInputs() {
+            // Klavye (Oklar, A/D, Boşluk)
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    state.keys.left = true;
+                    state.targetX = null;
+                }
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    state.keys.right = true;
+                    state.targetX = null;
+                }
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (!e.repeat) handlePaintActionStart();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') state.keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') state.keys.right = false;
+                if (e.code === 'Space') stopHoldPainting();
+            });
+
+            // Mobil Sol / Sağ Yürüme Tuşları
+            bindHoldMoveButton('btnLeft', 'left');
+            bindHoldMoveButton('btnRight', 'right');
+
+            // Fırça Vur Butonu (Hem tıkla hem basılı tutarak seri boya!)
+            btnPaint.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                handlePaintActionStart();
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => {
+                btnPaint.addEventListener(ev, stopHoldPainting);
+            });
+
+            // Atölye Zeminine Dokunarak/Tıklayarak Yürüme
+            stageEl.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('#easelZone') || e.target.closest('button') || e.target.closest('label')) return;
+
+                const rect = stageEl.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const charWidth = charWrapper.offsetWidth;
+                state.targetX = clampCharX(clickX - charWidth / 2);
+                state.autoPaintAfterWalk = false;
+
+                spawnFloorRipple(clickX, Math.max(rect.height * 0.74, Math.min(rect.height * 0.88, e.clientY - rect.top)));
+            });
+
+            // Tuval Üzerinde Doğrudan Parmakla/Fareyle Boyama
+            paintCanvas.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                if (state.completed) {
+                    isDraggingCanvas = true;
+                    paintCanvas.setPointerCapture(e.pointerId);
+                    drawFreehandPoint(paintCanvas, ctx, e, true);
+                    return;
+                }
+                if (!state.isNearEasel) {
+                    walkToEasel(true);
+                    return;
+                }
+                isDraggingCanvas = true;
+                paintCanvas.setPointerCapture(e.pointerId);
+                const pt = getCanvasCoords(e);
+                lastCanvasPoint = pt;
+                paintAtCanvasPoint(pt.x, pt.y, e.clientX, e.clientY, true);
+            });
+
+            paintCanvas.addEventListener('pointermove', (e) => {
+                if (state.completed && isDraggingCanvas) {
+                    drawFreehandPoint(paintCanvas, ctx, e, false);
+                    return;
+                }
+                if (!isDraggingCanvas || !state.isNearEasel) return;
+                const pt = getCanvasCoords(e);
+                if (lastCanvasPoint) {
+                    const dist = Math.hypot(pt.x - lastCanvasPoint.x, pt.y - lastCanvasPoint.y);
+                    const steps = Math.max(1, Math.ceil(dist / 10));
+                    for (let i = 1; i <= steps; i++) {
+                        const ix = lastCanvasPoint.x + ((pt.x - lastCanvasPoint.x) * i) / steps;
+                        const iy = lastCanvasPoint.y + ((pt.y - lastCanvasPoint.y) * i) / steps;
+                        paintAtCanvasPoint(ix, iy, e.clientX, e.clientY, i === steps);
+                    }
+                }
+                lastCanvasPoint = pt;
+            });
+
+            const stopDrag = () => {
+                isDraggingCanvas = false;
+                lastCanvasPoint = null;
+            };
+            paintCanvas.addEventListener('pointerup', stopDrag);
+            paintCanvas.addEventListener('pointercancel', stopDrag);
+
+            window.addEventListener('resize', () => {
+                state.charX = clampCharX(state.charX);
+                updateCharacterTransform();
+            });
+        }
+
+        function bindHoldMoveButton(id, dir) {
+            const btn = document.getElementById(id);
+            const start = (e) => {
+                e.preventDefault();
+                state.keys[dir] = true;
+                state.targetX = null;
+                state.autoPaintAfterWalk = false;
+            };
+            const stop = () => { state.keys[dir] = false; };
+            btn.addEventListener('pointerdown', start);
+            btn.addEventListener('pointerup', stop);
+            btn.addEventListener('pointerleave', stop);
+            btn.addEventListener('pointercancel', stop);
+        }
+
+        function getCanvasCoords(e) {
+            const rect = paintCanvas.getBoundingClientRect();
+            return {
+                x: ((e.clientX - rect.left) / rect.width) * paintCanvas.width,
+                y: ((e.clientY - rect.top) / rect.height) * paintCanvas.height
+            };
+        }
+
+        function getEaselStopX() {
+            const stageRect = stageEl.getBoundingClientRect();
+            const easelRect = easelZone.getBoundingClientRect();
+            const charW = charWrapper.offsetWidth;
+            return clampCharX((easelRect.left - stageRect.left) - charW * 0.68);
+        }
+
+        function clampCharX(x) {
+            const maxX = Math.max(20, stageEl.clientWidth - charWrapper.offsetWidth - 8);
+            return Math.max(6, Math.min(maxX, x));
+        }
+
+        function walkToEasel(autoPaint = false) {
+            state.targetX = getEaselStopX();
+            state.autoPaintAfterWalk = autoPaint;
+        }
+
+        /* =========================================================
+           7. 60FPS ANA DÖNGÜ, YAKINLIK VE KONUŞMA BALONLARI
+           ========================================================= */
+        function gameLoop(now) {
+            const dt = Math.min(0.05, (now - state.lastTime) / 1000);
+            state.lastTime = now;
+
+            let moveDir = 0;
+            if (state.keys.left) moveDir -= 1;
+            if (state.keys.right) moveDir += 1;
+
+            if (moveDir === 0 && state.targetX !== null) {
+                const diff = state.targetX - state.charX;
+                if (Math.abs(diff) > 4) {
+                    moveDir = Math.sign(diff);
+                    const step = moveDir * state.speed * dt;
+                    if (Math.abs(step) >= Math.abs(diff)) {
+                        state.charX = state.targetX;
+                        state.targetX = null;
+                        if (state.autoPaintAfterWalk) {
+                            state.autoPaintAfterWalk = false;
+                            setTimeout(() => performAutoBrushStroke(), 80);
+                        }
+                    } else {
+                        state.charX += step;
+                    }
+                } else {
+                    state.charX = state.targetX;
+                    state.targetX = null;
+                    if (state.autoPaintAfterWalk) {
+                        state.autoPaintAfterWalk = false;
+                        setTimeout(() => performAutoBrushStroke(), 80);
+                    }
+                }
+            } else if (moveDir !== 0) {
+                state.charX = clampCharX(state.charX + moveDir * state.speed * dt);
+            }
+
+            if (moveDir !== 0) {
+                state.facing = moveDir;
+                if (!state.isWalking) {
+                    state.isWalking = true;
+                    charWrapper.classList.add('is-walking');
+                }
+            } else if (state.isWalking) {
+                state.isWalking = false;
+                charWrapper.classList.remove('is-walking');
+            }
+
+            checkEaselProximity();
+            checkStudioSpeechZones(now);
+            updateCharacterTransform();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateCharacterTransform() {
+            charWrapper.style.transform = `translate3d(${state.charX}px, 0, 0)`;
+            charFlip.style.transform = `scaleX(${state.facing})`;
+        }
+
+        function checkEaselProximity() {
+            const easelStopX = getEaselStopX();
+            const dist = Math.abs(state.charX - easelStopX);
+            const nearNow = dist < Math.max(96, stageEl.clientWidth * 0.16);
+
+            if (nearNow !== state.isNearEasel) {
+                state.isNearEasel = nearNow;
+                if (nearNow) {
+                    btnPaint.classList.remove('bg-stone-300', 'text-stone-600');
+                    btnPaint.classList.add('paint-btn-ready', 'text-white');
+                    btnPaintLabel.textContent = 'Fırça Vur!';
+                    if (!state.completed) easelHint.textContent = 'Tuvale dokun veya Fırça Vur! 🎨';
+                } else {
+                    btnPaint.classList.remove('paint-btn-ready', 'text-white');
+                    btnPaint.classList.add('bg-stone-300', 'text-stone-600');
+                    btnPaintLabel.textContent = 'Şövaleye Yürü';
+                    if (!state.completed) easelHint.textContent = 'Yaklaş ve Boya ✨';
+                    stopHoldPainting();
+                }
+            }
+        }
+
+        // Atölyenin farklı bölgelerinde eğlenceli konuşma balonları tetikler
+        function checkStudioSpeechZones(now) {
+            const centerRatio = (state.charX + charWrapper.offsetWidth / 2) / stageEl.clientWidth;
+            let zone = null;
+
+            if (state.isNearEasel) {
+                zone = state.completed ? 'done' : 'easel';
+            } else if (centerRatio < 0.28) {
+                zone = 'left';
+            } else if (centerRatio >= 0.34 && centerRatio <= 0.58) {
+                zone = 'middle';
+            }
+
+            if (zone && zone !== state.activeZone && now - state.lastSpeechAt > 2400) {
+                state.activeZone = zone;
+                state.lastSpeechAt = now;
+                showSpeechBubble(CONFIG.speechZones[zone]);
+            }
+        }
+
+        function showSpeechBubble(text) {
+            speechText.textContent = text;
+            speechBubble.classList.remove('opacity-0', 'scale-90');
+            speechBubble.classList.add('opacity-100', 'scale-100');
+
+            clearTimeout(state.speechTimeout);
+            state.speechTimeout = setTimeout(() => {
+                speechBubble.classList.remove('opacity-100', 'scale-100');
+                speechBubble.classList.add('opacity-0', 'scale-90');
+            }, 3000);
+        }
+
+        /* =========================================================
+           8. BOYAMA MEKANİĞİ VE %100 FİNAL KUTLAMASI
+           ========================================================= */
+        function handlePaintActionStart() {
+            if (!state.isNearEasel) {
+                walkToEasel(true);
+                return;
+            }
+            state.facing = 1;
+            performAutoBrushStroke();
+
+            clearInterval(state.holdPaintInterval);
+            state.holdPaintInterval = setInterval(() => {
+                if (state.isNearEasel && !state.completed) {
+                    performAutoBrushStroke();
+                } else {
+                    stopHoldPainting();
+                }
+            }, 180);
+        }
+
+        function stopHoldPainting() {
+            clearInterval(state.holdPaintInterval);
+            state.holdPaintInterval = null;
+        }
+
+        function performAutoBrushStroke() {
+            const strokeColor = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)];
+            updateBrushTipColor(strokeColor);
+            triggerCharacterPaintAnim();
+
+            const unrevealed = [];
+            for (let i = 0; i < revealedGrid.length; i++) {
+                if (!revealedGrid[i]) unrevealed.push(i);
+            }
+
+            const targetIdx = unrevealed.length > 0
+                ? unrevealed[Math.floor(Math.random() * unrevealed.length)]
+                : Math.floor(Math.random() * revealedGrid.length);
+
+            const col = targetIdx % GRID_COLS;
+            const row = Math.floor(targetIdx / GRID_COLS);
+            const startX = ((col + 0.5) / GRID_COLS) * paintCanvas.width;
+            const startY = ((row + 0.5) / GRID_ROWS) * paintCanvas.height;
+
+            const angle = Math.random() * Math.PI * 2;
+            const length = 75 + Math.random() * 45;
+            const steps = 10;
+
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                const px = Math.max(14, Math.min(paintCanvas.width - 14, startX + Math.cos(angle) * length * (t - 0.5)));
+                const py = Math.max(14, Math.min(paintCanvas.height - 14, startY + Math.sin(angle) * length * (t - 0.5) + Math.sin(t * Math.PI) * 14));
+                revealCanvasBrush(px, py, 34, strokeColor);
+            }
+
+            const rect = paintCanvas.getBoundingClientRect();
+            const screenX = rect.left + (startX / paintCanvas.width) * rect.width;
+            const screenY = rect.top + (startY / paintCanvas.height) * rect.height;
+            spawnPaintSplash(screenX, screenY, 9, strokeColor);
+            updateProgress();
+        }
+
+        function paintAtCanvasPoint(x, y, clientX, clientY, emitFx = true) {
+            state.facing = 1;
+            const strokeColor = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)];
+            updateBrushTipColor(strokeColor);
+            triggerCharacterPaintAnim();
+            revealCanvasBrush(x, y, 30, strokeColor);
+
+            if (emitFx && Math.random() > 0.3) {
+                spawnPaintSplash(clientX, clientY, 4, strokeColor);
+            }
+            updateProgress();
+        }
+
+        function revealCanvasBrush(x, y, radius, tintColor) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(hiddenCanvas, 0, 0);
+
+            // Çok hafif canlı fırça darbesi parlaklığı
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = tintColor;
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            const minCol = Math.max(0, Math.floor(((x - radius * 0.85) / paintCanvas.width) * GRID_COLS));
+            const maxCol = Math.min(GRID_COLS - 1, Math.floor(((x + radius * 0.85) / paintCanvas.width) * GRID_COLS));
+            const minRow = Math.max(0, Math.floor(((y - radius * 0.85) / paintCanvas.height) * GRID_ROWS));
+            const maxRow = Math.min(GRID_ROWS - 1, Math.floor(((y + radius * 0.85) / paintCanvas.height) * GRID_ROWS));
+
+            for (let r = minRow; r <= maxRow; r++) {
+                for (let c = minCol; c <= maxCol; c++) {
+                    revealedGrid[r * GRID_COLS + c] = true;
+                }
+            }
+        }
+
+        function updateProgress() {
+            const count = revealedGrid.filter(Boolean).length;
+            const rawPct = Math.min(100, Math.round((count / (revealedGrid.length * 0.85)) * 100));
+
+            if (rawPct !== state.progress) {
+                state.progress = rawPct;
+                progressBar.style.width = rawPct + '%';
+                progressText.textContent = '%' + rawPct;
+            }
+
+            if (rawPct >= 100 && !state.completed) {
+                triggerCompletionCelebration();
+            }
+        }
+
+        function updateBrushTipColor(hex) {
+            const svgTip = document.getElementById('svgBrushTip');
+            const customTip = document.getElementById('customBrushTip');
+            if (svgTip) svgTip.setAttribute('fill', hex);
+            if (customTip) customTip.setAttribute('fill', hex);
+        }
+
+        function triggerCharacterPaintAnim() {
+            charWrapper.classList.add('is-painting');
+            clearTimeout(state.paintAnimTimeout);
+            state.paintAnimTimeout = setTimeout(() => {
+                charWrapper.classList.remove('is-painting');
+            }, 340);
+        }
+
+        function triggerCompletionCelebration() {
+            state.completed = true;
+            stopHoldPainting();
+
+            // Kalan minik kenarları tamamlayıp tabloyu pırıl pırıl göster
+            ctx.drawImage(hiddenCanvas, 0, 0);
+            easelHint.textContent = '🎉 Şaheser Tamamlandı!';
+            easelHint.classList.remove('animate-bounce');
+            easelHint.textContent = 'Bir renk seçip tabloların üzerine çiz!';
+            paintCanvas.classList.add('free-draw');
+            const palette = document.getElementById('drawingPalette');
+            palette.classList.remove('hidden');
+            palette.classList.add('flex');
+            document.querySelectorAll('.wall-draw-canvas').forEach((canvas) => canvas.classList.add('drawing-enabled'));
+
+            showSpeechBubble(CONFIG.speechZones.done);
+            charWrapper.classList.add('is-celebrating');
+
+            spawnCelebrationConfetti(70);
+
+            setTimeout(() => {
+                openGreetingModal();
+                setTimeout(() => charWrapper.classList.remove('is-celebrating'), 1600);
+            }, 900);
+        }
+
+        /* =========================================================
+           9. KUTLAMA MODALI, PALET IŞIĞI VE TEKRAR BOYA
+           ========================================================= */
+        function openGreetingModal() {
+            const modal = document.getElementById('greetingModal');
+            const box = document.getElementById('greetingCardBox');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-90', 'translate-y-6');
+                box.classList.add('scale-100', 'translate-y-0');
+            });
+        }
+
+        function closeGreetingModal() {
+            const modal = document.getElementById('greetingModal');
+            const box = document.getElementById('greetingCardBox');
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-90', 'translate-y-6');
+            box.classList.remove('scale-100', 'translate-y-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        function closeModalBackdrop(e) {
+            if (e.target.id === 'greetingModal') closeGreetingModal();
+        }
+
+        function resetPaintingAndClose() {
+            state.completed = false;
+            state.progress = 0;
+            revealedGrid = new Array(GRID_COLS * GRID_ROWS).fill(false);
+            progressBar.style.width = '0%';
+            progressText.textContent = '%0';
+            easelHint.textContent = state.isNearEasel ? 'Tuvale dokun veya Fırça Vur! 🎨' : 'Yaklaş ve Boya ✨';
+            easelHint.classList.add('animate-bounce');
+            paintCanvas.classList.remove('free-draw');
+            const palette = document.getElementById('drawingPalette');
+            palette.classList.add('hidden');
+            palette.classList.remove('flex');
+            document.querySelectorAll('.wall-draw-canvas').forEach((canvas) => canvas.classList.remove('drawing-enabled'));
+            drawBlankLinenCanvas();
+            closeGreetingModal();
+            showToast('Yeni boş tuval hazır! 🎨');
+        }
+
+        function setModalAccent(hex, btnEl) {
+            document.getElementById('modalGlow').style.background = hex;
+            const box = document.getElementById('greetingCardBox');
+            box.style.borderColor = hex + '99';
+            box.style.boxShadow = `0 25px 60px ${hex}55, inset 0 0 30px rgba(255, 255, 255, 0.7)`;
+
+            document.querySelectorAll('.modal-swatch').forEach(el => el.classList.remove('active'));
+            btnEl.classList.add('active');
+
+            const rect = btnEl.getBoundingClientRect();
+            spawnPaintSplash(rect.left + rect.width / 2, rect.top, 16, hex);
+        }
+
+        /* =========================================================
+           10. GÖRSEL EFEKTLER (HALKA, BOYA SIÇRAMASI, KONFETİ)
+           ========================================================= */
+        function spawnFloorRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'floor-ripple';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            stageEl.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 580);
+        }
+
+        function spawnPaintSplash(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'fx-particle';
+                const size = Math.random() * 9 + 5;
+                dot.style.width = size + 'px';
+                dot.style.height = size + 'px';
+                dot.style.borderRadius = '50%';
+                dot.style.backgroundColor = color;
+                dot.style.left = x + 'px';
+                dot.style.top = y + 'px';
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 62 + 18;
+                const tx = Math.cos(angle) * dist;
+                const ty = Math.sin(angle) * dist - 16;
+
+                dot.animate([
+                    { transform: 'translate(-50%, -50%) scale(0.4)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.1)`, opacity: 0 }
+                ], {
+                    duration: 420 + Math.random() * 260,
+                    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                    fill: 'forwards'
+                });
+
+                document.body.appendChild(dot);
+                setTimeout(() => dot.remove(), 720);
+            }
+        }
+
+        function spawnCelebrationConfetti(count) {
+            const icons = ['🎨', '✨', '❤️', '🖌️', '💐'];
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'fx-particle';
+                const isIcon = Math.random() > 0.58;
+
+                if (isIcon) {
+                    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+                    el.style.fontSize = (Math.random() * 14 + 14) + 'px';
+                } else {
+                    const size = Math.random() * 10 + 7;
+                    el.style.width = size + 'px';
+                    el.style.height = size + 'px';
+                    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+                    el.style.backgroundColor = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)];
+                }
+
+                el.style.left = (window.innerWidth * (0.18 + Math.random() * 0.64)) + 'px';
+                el.style.top = (window.innerHeight * 0.42) + 'px';
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * 250 + 80;
+                const tx = Math.cos(angle) * dist;
+                const ty = Math.sin(angle) * dist - 95;
+
+                el.animate([
+                    { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${tx * 0.6}px), calc(-50% + ${ty * 0.6}px)) scale(1.25) rotate(170deg)`, opacity: 1, offset: 0.45 },
+                    { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty + 150}px)) scale(0.5) rotate(360deg)`, opacity: 0 }
+                ], {
+                    duration: 1300 + Math.random() * 700,
+                    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                    fill: 'forwards'
+                });
+
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 2100);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initStudio);
+    </script>
+</body>
+</html>
